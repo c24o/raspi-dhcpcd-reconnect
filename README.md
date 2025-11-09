@@ -17,6 +17,7 @@ If your Raspberry Pi loses Internet access (for example, after a router reboot),
 - Optional Telegram notification when the Internet connection is restored.
 - Logs only when something goes wrong or recovers — no unnecessary noise.
 - Allows custom IP addresses for router and Internet targets.
+- Reboot the system if the connection is not established.
 - Lightweight and cron-friendly.
 
 ---
@@ -81,23 +82,31 @@ Example:
 You can override the defaults by passing arguments when running the script:
 
 ```bash
-./reconnect-dhcpcd-network.sh <router_ip> <internet_ip>
+./reconnect-dhcpcd-network.sh --router-ip <router_ip> --internet-ip <internet_ip>
 ```
 
 Examples:
 ```bash
-./reconnect-dhcpcd-network.sh 192.168.0.1 1.1.1.1
-./reconnect-dhcpcd-network.sh 10.0.0.1 9.9.9.9
+./reconnect-dhcpcd-network.sh --router-ip 192.168.0.1 --internet-ip 1.1.1.1
+./reconnect-dhcpcd-network.sh --router-ip 10.0.0.1 --internet-ip 9.9.9.9
 ```
 
-If only one argument is provided, the router IP is updated, and the Internet IP keeps its default value.
+The arguments are optional, if one of them or both of them are not used, then the default values are used.
 
 Example:
 ```bash
-./reconnect-dhcpcd-network.sh 192.168.0.1
+./reconnect-dhcpcd-network.sh --router-ip 192.168.0.1
 ```
 
 In this case, it will use the default internet IP of 8.8.8.8.
+
+### Try reboot
+As a last resource, if the connection is not established after restarting the `dhcpcd` service, the script can reboot the entire system if the argument `--try-reboot` is used.
+
+Example:
+```bash
+./reconnect-dhcpcd-network.sh --try-reboot --internet-ip 1.1.1.1
+```
 
 ---
 

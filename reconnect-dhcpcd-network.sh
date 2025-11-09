@@ -8,8 +8,9 @@
 # Default router: 192.168.1.1
 # Default Internet test host: 8.8.8.8
 # Optional arguments:
-#   $1 - router IP
-#   $2 - internet test IP
+#   --router-ip     - Router IP address (default: 192.168.1.1)
+#   --internet-ip   - Internet test IP address (default: 8.8.8.8)
+#   --try-reboot    - Attempt system reboot if reconnection fails
 #
 # Logs only when connectivity fails or recovers.
 # Sends a Telegram message when connection is restored.
@@ -19,9 +20,43 @@
 LOG_FILE="/var/log/reconnect-dhcpcd-network.log"
 ENV_FILE="/usr/local/etc/raspi-dhcpcd-reconnect/reconnect-dhcpcd-network.env"
 
-# Allow overriding defaults via command-line arguments
-ROUTER_IP="${1:-192.168.1.1}"
-INTERNET_IP="${2:-8.8.8.8}"
+# Initialize variables with default values
+TRY_REBOOT=false
+ROUTER_IP="192.168.1.1"
+INTERNET_IP="8.8.8.8"
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --try-reboot)
+            TRY_REBOOT=true
+            shift
+            ;;
+        --router-ip)
+            if [ -n "$2" ]; then
+                ROUTER_IP="$2"
+                shift 2
+            else
+                echo "Error: --router-ip requires an IP address"
+                exit 1
+            fi
+            ;;
+        --internet-ip)
+            if [ -n "$2" ]; then
+                INTERNET_IP="$2"
+                shift 2
+            else
+                echo "Error: --internet-ip requires an IP address"
+                exit 1
+            fi
+            ;;
+        *)
+            echo "Error: Unknown parameter '$1'"
+            echo "Usage: $0 [--router-ip IP] [--internet-ip IP] [--try-reboot]"
+            exit 1
+            ;;
+    esac
+done
 
 # Number of retry attempts before deciding connection is down
 MAX_RETRIES=3
@@ -93,6 +128,10 @@ else
         send_telegram_message "$message"
     else
         log "dhcpcd restarted but still no connection."
+        if [ "$TRY_REBOOT" = true ]; then
+            log "Attempting system reboot..."
+            /sbin/reboot now
+        fi
     fi
 fi
 
