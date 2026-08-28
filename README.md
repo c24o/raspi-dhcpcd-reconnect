@@ -17,8 +17,11 @@ If your Raspberry Pi loses Internet access (for example, after a router reboot),
 - Optional Telegram notification when the Internet connection is restored.
 - Logs only when something goes wrong or recovers — no unnecessary noise.
 - Allows custom IP addresses for router and Internet targets.
-- Reboot the system if the connection is not established.
+- Reboot the system if the connection is not established (rate-limited to avoid reboot loops).
+- Uses a lock file so overlapping cron runs don't stack up.
 - Lightweight and cron-friendly.
+
+> **Note:** The script must run as root (needed to restart `dhcpcd` and to reboot). Running it via `sudo crontab -e` as shown below satisfies this.
 
 ---
 
@@ -30,8 +33,8 @@ git clone https://github.com/c24o/raspi-dhcpcd-reconnect.git
 cd raspi-dhcpcd-reconnect
 ```
 
-### 2. (Optional) Create an environment file
-If you want to receive Telegram notifications, then create `/usr/local/etc/raspi-dhcpcd-reconnect/reconnect-dhcpcd-network.env` and add your Telegram credentials:
+### 2. (Optional) Telegram notification
+If you want to receive Telegram notifications, then create the enviroment file `/usr/local/etc/raspi-dhcpcd-reconnect/reconnect-dhcpcd-network.env` and add your Telegram credentials:
 
 ```bash
 TELEGRAM_BOT_TOKEN="1234567890:ABCDEF1234567890abcdef1234567890ab"
@@ -107,6 +110,8 @@ Example:
 ```bash
 ./reconnect-dhcpcd-network.sh --try-reboot --internet-ip 1.1.1.1
 ```
+
+To avoid reboot loops (e.g. when the router itself is down and a reboot won't help), the script will only reboot once every 6 hours. It tracks the last reboot time in `/usr/local/etc/raspi-dhcpcd-reconnect/reboot`.
 
 ---
 
@@ -185,6 +190,8 @@ By default, logs are saved at:
 ```
 
 Only connection failures and recoveries are recorded.
+
+The script also uses two small runtime files under `/usr/local/etc/raspi-dhcpcd-reconnect/`: a lock file (`lock`) to prevent overlapping runs, and a reboot timestamp (`reboot`) to rate-limit `--try-reboot`.
 
 Example entries:
 ```
