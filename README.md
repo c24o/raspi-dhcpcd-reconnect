@@ -65,6 +65,15 @@ Run `sudo crontab -e` and add this line to check every 10 minutes:
 */10 * * * * /path/to/reconnect-dhcpcd-network.sh
 ```
 
+### 5. (Optional) Set up log rotation
+The script logs to `/var/log/raspi-dhcpcd-reconnect.log`. To keep it from growing unbounded, install the included `logrotate` config:
+
+```bash
+sudo cp raspi-dhcpcd-reconnect.logrotate /etc/logrotate.d/raspi-dhcpcd-reconnect
+```
+
+This rotates the log weekly (or sooner if it passes 5 MB), keeping 8 compressed rotations (~2 months of history).
+
 ---
 
 ## Default and Custom Values
@@ -192,6 +201,8 @@ By default, logs are saved at:
 Only connection failures and recoveries are recorded.
 
 The script also uses two small runtime files under `/usr/local/etc/raspi-dhcpcd-reconnect/`: a lock file (`lock`) to prevent overlapping runs, and a reboot timestamp (`reboot`) to rate-limit `--try-reboot`.
+
+Log rotation is handled by the `raspi-dhcpcd-reconnect.logrotate` config (see [installation step 5](#5-optional-set-up-log-rotation)) — the script itself never rotates or truncates the log.
 
 Example entries:
 ```
