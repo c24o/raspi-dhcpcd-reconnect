@@ -41,6 +41,17 @@ TRY_REBOOT=false
 ROUTER_IP="192.168.1.1"
 INTERNET_IP="8.8.8.8"
 
+# Validate a string is a dotted-quad IPv4 address with each octet <= 255.
+is_valid_ipv4() {
+    local ip="$1"
+    [[ "$ip" =~ ^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$ ]] || return 1
+    local octet
+    for octet in "${BASH_REMATCH[@]:1}"; do
+        (( octet <= 255 )) || return 1
+    done
+    return 0
+}
+
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -50,6 +61,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --router-ip)
             if [ -n "$2" ]; then
+                if ! is_valid_ipv4 "$2"; then
+                    echo "Error: --router-ip must be a valid IPv4 address (got '$2')"
+                    exit 1
+                fi
                 ROUTER_IP="$2"
                 shift 2
             else
@@ -59,6 +74,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --internet-ip)
             if [ -n "$2" ]; then
+                if ! is_valid_ipv4 "$2"; then
+                    echo "Error: --internet-ip must be a valid IPv4 address (got '$2')"
+                    exit 1
+                fi
                 INTERNET_IP="$2"
                 shift 2
             else
@@ -101,7 +120,7 @@ fi
 # Function to check connectivity.
 check_connectivity() {
     local target="$1"
-    ping -c 1 -W 2 "$target" > /dev/null 2>&1
+    ping -c 1 -W 2 -- "$target" > /dev/null 2>&1
     return $?  # 0 = success, nonzero = failure
 }
 

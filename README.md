@@ -103,6 +103,8 @@ Example:
 
 In this case, it will use the default internet IP of 8.8.8.8.
 
+Both `--router-ip` and `--internet-ip` are validated as dotted-quad IPv4 addresses (each octet 0–255); the script exits with an error if the value doesn't look like a valid IP, instead of silently treating a typo as a connection failure.
+
 ### Try reboot
 As a last resource, if the connection is not established after restarting the `dhcpcd` service, the script can reboot the entire system if the argument `--try-reboot` is used.
 
